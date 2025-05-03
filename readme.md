@@ -6,7 +6,7 @@ README.md updated with improved activation instructions:
 PDF Toolkit is a PyQt5 application for combining, splitting, and removing pages from PDF files.
 
 ## Installation
-1. Create a virtual environment (optional but recommended):
+1. Create a virtual environment (highly recommended):
    ```bash
    python -m venv venv
    ```
