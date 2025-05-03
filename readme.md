@@ -1,4 +1,4 @@
-README.md created with the following contents:
+README.md updated with improved activation instructions:
 
 # PDF Toolkit
 
@@ -9,9 +9,21 @@ PDF Toolkit is a PyQt5 application for combining, splitting, and removing pages 
 1. Create a virtual environment (optional but recommended):
    ```bash
    python -m venv venv
-   source venv/bin/activate  # on Windows: venv\Scripts\activate
    ```
-2. Install dependencies:
+2. Activate the virtual environment:
+   - **Linux/macOS**:
+     ```bash
+     source venv/bin/activate
+     ```
+   - **Windows (CMD)**:
+     ```cmd
+     venv\Scripts\activate.bat
+     ```
+   - **Windows (PowerShell)**:
+     ```powershell
+     venv\Scripts\Activate.ps1
+     ```
+3. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
