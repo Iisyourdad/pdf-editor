@@ -15,9 +15,9 @@ class PDFTool(QMainWindow):
         super().__init__()
         self.setWindowTitle("PDF Toolkit")
         geom = QDesktopWidget().availableGeometry()
-        w, h = int(geom.width()*0.75), int(geom.height()*0.75)
-        self.setGeometry((geom.width()-w)//2, (geom.height()-h)//2, w, h)
-        self.scale, self.rotation = 1.28, 0
+        w, h = int(geom.width() * 0.75), int(geom.height() * 0.75)
+        self.setGeometry((geom.width() - w) // 2, (geom.height() - h) // 2, w, h)
+        self.scale, self.rotation = 1.0, 0
         self.current_pdf = None
         self.page_containers = []
         self._split_gen = None
@@ -31,6 +31,7 @@ class PDFTool(QMainWindow):
         combine_tab = QWidget()
         c_main = QHBoxLayout(combine_tab)
         self.combine_preview = QListWidget()
+        self.combine_preview.setStyleSheet("background: #1e1e1e;")
         self.combine_preview.setViewMode(QListWidget.IconMode)
         self.combine_preview.setIconSize(QSize(400, 560))
         self.combine_preview.setResizeMode(QListWidget.Adjust)
@@ -43,12 +44,9 @@ class PDFTool(QMainWindow):
         self.combo_list = QListWidget()
         self.combo_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
         bl = QHBoxLayout()
-        for t, f in [("➕ Add", self.add_items),
-                     ("❌ Remove", self.remove_selected),
-                     ("⬆️ Up", self.move_up),
-                     ("⬇️ Down", self.move_down),
-                     ("🔀 Reverse", self.reverse_order)]:
-            b = QPushButton(t); b.clicked.connect(f); bl.addWidget(b)
+        for t, f in [("➕ Add", self.add_items), ("❌ Remove", self.remove_selected), ("⬆️ Up", self.move_up), ("⬇️ Down", self.move_down), ("🔀 Reverse", self.reverse_order)]:
+            b = QPushButton(t); b.clicked.connect(f)
+            bl.addWidget(b)
         combine_btn = QPushButton("📄 Combine & Save As…")
         combine_btn.clicked.connect(self.combine_pdfs)
         c_layout.addWidget(self.combo_list)
@@ -59,14 +57,17 @@ class PDFTool(QMainWindow):
 
         split_tab = QWidget()
         s_layout = QVBoxLayout(split_tab)
-        sel = QPushButton("📂 Select PDF"); sel.clicked.connect(self.select_pdf)
+        sel = QPushButton("📂 Select PDF")
+        sel.clicked.connect(self.select_pdf)
         self.selected_label = QLabel("No PDF selected.")
         self.preview_list = QListWidget()
         self.preview_list.setViewMode(QListWidget.IconMode)
         self.preview_list.setIconSize(QSize(400, 520))
         self.preview_list.setResizeMode(QListWidget.Adjust)
         self.preview_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        rem = QPushButton("✂️ Remove & Save"); rem.clicked.connect(self.split_pdf)
+        self.preview_list.setDragDropMode(QAbstractItemView.NoDragDrop)
+        rem = QPushButton("✂️ Remove & Save")
+        rem.clicked.connect(self.split_pdf)
         s_layout.addWidget(sel)
         s_layout.addWidget(self.selected_label)
         s_layout.addWidget(self.preview_list, 1)
@@ -77,47 +78,52 @@ class PDFTool(QMainWindow):
         v_layout = QVBoxLayout(viewer_tab)
         nav = QHBoxLayout()
         nav.addStretch()
-        self.page_label = QLabel("Page 0/0"); self.page_label.setAlignment(Qt.AlignCenter)
-        self.page_input = QLineEdit(); self.page_input.setFixedWidth(60)
+        self.page_label = QLabel("Page 0/0")
+        self.page_label.setAlignment(Qt.AlignCenter)
+        self.page_input = QLineEdit()
+        self.page_input.setFixedWidth(60)
         self.page_input.returnPressed.connect(self.go_to_page)
-        nav.addWidget(self.page_label); nav.addWidget(self.page_input); nav.addStretch()
+        nav.addWidget(self.page_label)
+        nav.addWidget(self.page_input)
+        nav.addStretch()
         v_layout.addLayout(nav)
 
         tl = QHBoxLayout()
-        for txt, fn in [
-            ("📂 Open PDF", self.open_pdf_viewer),
-            ("🖨️ Print", self.print_pdf),
-            ("🔍+", self.zoom_in),
-            ("🔍-", self.zoom_out)
-        ]:
-            b = QPushButton(txt); b.clicked.connect(fn); tl.addWidget(b)
+        for txt, fn in [("📂 Open PDF", self.open_pdf_viewer), ("🖨️ Print", self.print_pdf), ("🔍+", self.zoom_in), ("🔍-", self.zoom_out)]:
+            b = QPushButton(txt); b.clicked.connect(fn)
+            tl.addWidget(b)
         zl = QLabel("Zoom:")
         zl.setStyleSheet("background: #3c3f41; border: none; padding: 6px; border-radius: 4px;")
         tl.addWidget(zl)
-        self.zoom_input = QLineEdit(str(int(self.scale*100))); self.zoom_input.setFixedWidth(50)
+        self.zoom_input = QLineEdit(str(int(self.scale * 100)))
+        self.zoom_input.setFixedWidth(50)
         self.zoom_input.returnPressed.connect(lambda: self.set_zoom(self.zoom_input.text()))
         tl.addWidget(self.zoom_input)
-        rt = QToolButton(); rt.setIcon(self.style().standardIcon(QStyle.SP_BrowserReload))
-        rt.clicked.connect(self.rotate); tl.addWidget(rt)
+        rt = QToolButton()
+        rt.setIcon(self.style().standardIcon(QStyle.SP_BrowserReload))
+        rt.clicked.connect(self.rotate)
+        tl.addWidget(rt)
         v_layout.addLayout(tl)
 
-        self.scroll_area = QScrollArea(); self.scroll_area.setWidgetResizable(True)
-        self.pages_widget = QWidget(); self.pages_layout = QVBoxLayout(self.pages_widget)
-        self.pages_layout.setContentsMargins(0, 0, 0, 0); self.pages_layout.setSpacing(0)
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.pages_widget = QWidget()
+        self.pages_layout = QVBoxLayout(self.pages_widget)
+        self.pages_layout.setContentsMargins(0, 0, 0, 0)
+        self.pages_layout.setSpacing(0)
         self.scroll_area.setWidget(self.pages_widget)
         self.scroll_area.verticalScrollBar().valueChanged.connect(self.update_current_page)
         v_layout.addWidget(self.scroll_area, 1)
         tabs.addTab(viewer_tab, "Viewer")
 
-        main = QWidget(); ml = QVBoxLayout(main)
-        ml.setContentsMargins(0, 0, 0, 0); ml.addWidget(tabs)
+        main = QWidget()
+        ml = QVBoxLayout(main)
+        ml.setContentsMargins(0, 0, 0, 0)
+        ml.addWidget(tabs)
         self.setCentralWidget(main)
 
     def add_items(self):
-        files, _ = QFileDialog.getOpenFileNames(
-            self, "Select PDFs/Images", "",
-            "PDF (*.pdf);;Images (*.png *.jpg *.jpeg *.bmp *.gif)"
-        )
+        files, _ = QFileDialog.getOpenFileNames(self, "Select PDFs/Images", "", "PDF (*.pdf);;Images (*.png *.jpg *.jpeg *.bmp *.gif)")
         for f in files:
             if not any(self.combo_list.item(i).text() == f for i in range(self.combo_list.count())):
                 self.combo_list.addItem(f)
@@ -125,6 +131,10 @@ class PDFTool(QMainWindow):
 
     def load_combine_previews(self):
         self.combine_preview.clear()
+        w = self.combine_preview.viewport().width()
+        icon_w = int(w * 0.75)
+        icon_h = int(icon_w * 1.4)
+        self.combine_preview.setIconSize(QSize(icon_w, icon_h))
         files = [self.combo_list.item(i).text() for i in range(self.combo_list.count())]
         def gen():
             count = 1
@@ -133,14 +143,15 @@ class PDFTool(QMainWindow):
                 if ext == ".pdf":
                     doc = fitz.open(f)
                     for p in range(doc.page_count):
-                        pix = doc.load_page(p).get_pixmap(matrix=fitz.Matrix(0.8,0.8))
+                        pix = doc.load_page(p).get_pixmap(matrix=fitz.Matrix(0.75, 0.75))
                         yield QIcon(QPixmap.fromImage(QImage.fromData(pix.tobytes("ppm")))), str(count)
                         count += 1
                 else:
                     img = QImage(f).scaled(400, 560, Qt.KeepAspectRatio, Qt.SmoothTransformation)
                     yield QIcon(QPixmap.fromImage(img)), str(count)
                     count += 1
-        self._gen = gen(); QTimer.singleShot(0, self._load_next)
+        self._gen = gen()
+        QTimer.singleShot(0, self._load_next)
 
     def _load_next(self):
         try:
@@ -159,16 +170,16 @@ class PDFTool(QMainWindow):
         r = self.combo_list.currentRow()
         if r > 0:
             item = self.combo_list.takeItem(r)
-            self.combo_list.insertItem(r-1, item)
-            self.combo_list.setCurrentRow(r-1)
+            self.combo_list.insertItem(r - 1, item)
+            self.combo_list.setCurrentRow(r - 1)
         self.load_combine_previews()
 
     def move_down(self):
         r = self.combo_list.currentRow()
-        if 0 <= r < self.combo_list.count()-1:
+        if 0 <= r < self.combo_list.count() - 1:
             item = self.combo_list.takeItem(r)
-            self.combo_list.insertItem(r+1, item)
-            self.combo_list.setCurrentRow(r+1)
+            self.combo_list.insertItem(r + 1, item)
+            self.combo_list.setCurrentRow(r)
         self.load_combine_previews()
 
     def reverse_order(self):
@@ -212,8 +223,9 @@ class PDFTool(QMainWindow):
         def gen():
             for i in range(doc.page_count):
                 pix = doc.load_page(i).get_pixmap(matrix=fitz.Matrix(1.0, 1.0))
-                yield QIcon(QPixmap.fromImage(QImage.fromData(pix.tobytes("ppm")))), str(i+1), i+1
-        self._split_gen = gen(); QTimer.singleShot(0, self._load_split)
+                yield QIcon(QPixmap.fromImage(QImage.fromData(pix.tobytes("ppm")))), str(i + 1), i + 1
+        self._split_gen = gen()
+        QTimer.singleShot(0, self._load_split)
 
     def _load_split(self):
         try:
@@ -259,16 +271,22 @@ class PDFTool(QMainWindow):
     def _gen_view(self):
         for i in range(self.viewer_doc.page_count):
             pix = self.viewer_doc.load_page(i).get_pixmap(matrix=fitz.Matrix(self.scale, self.scale))
-            yield pix, i+1
+            yield pix, i + 1
 
     def _load_view(self):
         try:
             pix, num = next(self._view_gen)
             img = QImage.fromData(pix.tobytes("ppm"))
             pm = QPixmap.fromImage(img).transformed(QTransform().rotate(self.rotation))
-            lbl = QLabel(); lbl.setAlignment(Qt.AlignCenter); lbl.setPixmap(pm)
-            c = QWidget(); l = QVBoxLayout(c); l.setContentsMargins(0,10,0,10); l.addWidget(lbl)
-            self.pages_layout.addWidget(c); self.page_containers.append(c)
+            lbl = QLabel()
+            lbl.setAlignment(Qt.AlignCenter)
+            lbl.setPixmap(pm)
+            c = QWidget()
+            l = QVBoxLayout(c)
+            l.setContentsMargins(0, 10, 0, 10)
+            l.addWidget(lbl)
+            self.pages_layout.addWidget(c)
+            self.page_containers.append(c)
             QTimer.singleShot(0, self._load_view)
         except StopIteration:
             self.page_label.setText(f"Page 1/{self.viewer_doc.page_count}")
@@ -276,7 +294,8 @@ class PDFTool(QMainWindow):
     def print_pdf(self):
         if not self.current_pdf:
             return
-        printer = QPrinter(); dialog = QPrintDialog(printer, self)
+        printer = QPrinter()
+        dialog = QPrintDialog(printer, self)
         if dialog.exec_() == QPrintDialog.Accepted:
             painter = QPainter(printer)
             for i in range(self.viewer_doc.page_count):
@@ -308,7 +327,7 @@ class PDFTool(QMainWindow):
             p = int(self.page_input.text())
             tot = self.viewer_doc.page_count
             if 1 <= p <= tot:
-                y = self.page_containers[p-1].pos().y()
+                y = self.page_containers[p - 1].pos().y()
                 self.scroll_area.verticalScrollBar().setValue(y)
                 self.page_label.setText(f"Page {p}/{tot}")
         except:
@@ -316,18 +335,18 @@ class PDFTool(QMainWindow):
 
     def zoom_in(self):
         self.scale *= 1.25
-        self.zoom_input.setText(str(int(self.scale*100)))
+        self.zoom_input.setText(str(int(self.scale * 100)))
         self.refresh_view()
 
     def zoom_out(self):
         self.scale /= 1.25
-        self.zoom_input.setText(str(int(self.scale*100)))
+        self.zoom_input.setText(str(int(self.scale * 100)))
         self.refresh_view()
 
     def set_zoom(self, t):
         try:
-            self.scale = float(t)/100
-            self.zoom_input.setText(str(int(self.scale*100)))
+            self.scale = float(t) / 100
+            self.zoom_input.setText(str(int(self.scale * 100)))
             self.refresh_view()
         except:
             pass
@@ -344,6 +363,13 @@ class PDFTool(QMainWindow):
             else:
                 break
         self.page_label.setText(f"Page {pg}/{self.viewer_doc.page_count}")
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        w = self.combine_preview.viewport().width()
+        icon_w = int(w * 0.75)
+        icon_h = int(icon_w * 1.4)
+        self.combine_preview.setIconSize(QSize(icon_w, icon_h))
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
